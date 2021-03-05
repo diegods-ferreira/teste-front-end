@@ -6,6 +6,7 @@ import {
   CardMedia,
   CardContent,
 } from '@material-ui/core';
+import { Link } from 'react-router-dom';
 
 interface ContainerProps {
   fitScreen?: boolean;
@@ -144,4 +145,10 @@ export const VideoCardContent = styled(CardContent)`
     -webkit-line-clamp: 4;
     -webkit-box-orient: vertical;
   }
+`;
+
+export const StyledLink = styled(Link)`
+  width: 100%;
+  height: 100%;
+  text-decoration: none;
 `;

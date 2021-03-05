@@ -1,5 +1,4 @@
 import React, { ChangeEvent, FormEvent, useCallback, useState } from 'react';
-import axios from 'axios';
 import {
   Backdrop,
   Button,
@@ -9,6 +8,8 @@ import {
   Snackbar,
 } from '@material-ui/core';
 import { Search } from '@material-ui/icons';
+
+import youtubeApi from '../../services/youtubeApi';
 
 import notFoundImg from '../../assets/not-found.png';
 
@@ -22,11 +23,8 @@ import {
   VideoCard,
   VideoCardMedia,
   VideoCardContent,
+  StyledLink,
 } from './styles';
-
-interface VideoThumbnail {
-  url: string;
-}
 
 interface Video {
   id: {
@@ -37,9 +35,9 @@ interface Video {
     channelTitle: string;
     description: string;
     thumbnails: {
-      default: VideoThumbnail;
-      medium: VideoThumbnail;
-      high: VideoThumbnail;
+      high: {
+        url: string;
+      };
     };
   };
 }
@@ -52,7 +50,7 @@ const Home: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSearched, setIsSearched] = useState(false);
-  const [ísLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
 
@@ -80,8 +78,16 @@ const Home: React.FC = () => {
       setIsLoading(true);
 
       try {
-        const response = await axios.get<YoutubeSearchApiResponse>(
-          `https://www.googleapis.com/youtube/v3/search?part=id,snippet&q=${searchTerm}&&maxResults=10&key=${process.env.REACT_APP_YOUTUBE_API_KEY}`,
+        const response = await youtubeApi.get<YoutubeSearchApiResponse>(
+          '/search',
+          {
+            params: {
+              part: 'id,snippet',
+              q: searchTerm,
+              maxResults: 9,
+              key: process.env.REACT_APP_YOUTUBE_API_KEY,
+            },
+          },
         );
 
         setVideos(response.data.items);
@@ -136,8 +142,10 @@ const Home: React.FC = () => {
                 </VideoCardContent>
 
                 <CardActions>
-                  <Button size="small" color="primary">
-                    Detalhes do Vídeo
+                  <Button size="small" color="primary" variant="text">
+                    <StyledLink to={`/video/${video.id.videoId}`}>
+                      Detalhes do video
+                    </StyledLink>
                   </Button>
                 </CardActions>
               </VideoCard>
@@ -155,7 +163,7 @@ const Home: React.FC = () => {
         key={new Date().getTime()}
       />
 
-      <Backdrop style={{ zIndex: 1 }} open={ísLoading}>
+      <Backdrop style={{ zIndex: 1 }} open={isLoading}>
         <CircularProgress color="primary" />
       </Backdrop>
     </>
