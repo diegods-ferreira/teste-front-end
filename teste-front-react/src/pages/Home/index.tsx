@@ -1,4 +1,10 @@
-import React, { ChangeEvent, FormEvent, useCallback, useState } from 'react';
+import React, {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react';
 import {
   Backdrop,
   Button,
@@ -44,11 +50,13 @@ interface Video {
 
 interface YoutubeSearchApiResponse {
   items: Video[];
+  nextPageToken: string;
 }
 
 const Home: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
+  const [nextPageToken, setNextPageToken] = useState('');
   const [isSearched, setIsSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
@@ -65,8 +73,42 @@ const Home: React.FC = () => {
     setOpenErrorSnackbar(false);
   }, []);
 
-  const handleSearchVideos = useCallback(
-    async (event: FormEvent<HTMLDivElement>) => {
+  const handleSearchVideos = useCallback(async () => {
+    setIsLoading(true);
+
+    try {
+      const response = await youtubeApi.get<YoutubeSearchApiResponse>(
+        '/search',
+        {
+          params: {
+            part: 'id,snippet',
+            q: searchTerm,
+            maxResults: 9,
+            key: process.env.REACT_APP_YOUTUBE_API_KEY,
+            ...(nextPageToken ? { pageToken: nextPageToken } : {}),
+          },
+        },
+      );
+
+      if (nextPageToken) {
+        setVideos(prevState => [...prevState, ...response.data.items]);
+      } else {
+        setVideos(response.data.items);
+      }
+
+      setNextPageToken(response.data.nextPageToken);
+      setIsSearched(true);
+    } catch (err) {
+      setErrorSnackbarMessage('Erro ao pesquisar');
+      setOpenErrorSnackbar(true);
+      console.log(err.response.data);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [searchTerm, nextPageToken]);
+
+  const handleSearchFormSubmit = useCallback(
+    (event: FormEvent<HTMLDivElement>) => {
       event.preventDefault();
 
       if (!searchTerm) {
@@ -75,39 +117,34 @@ const Home: React.FC = () => {
         return;
       }
 
-      setIsLoading(true);
-
-      try {
-        const response = await youtubeApi.get<YoutubeSearchApiResponse>(
-          '/search',
-          {
-            params: {
-              part: 'id,snippet',
-              q: searchTerm,
-              maxResults: 9,
-              key: process.env.REACT_APP_YOUTUBE_API_KEY,
-            },
-          },
-        );
-
-        setVideos(response.data.items);
-        setIsSearched(true);
-      } catch (err) {
-        setErrorSnackbarMessage('Erro ao pesquisar');
-        setOpenErrorSnackbar(true);
-        console.log(err.response.data);
-      } finally {
-        setIsLoading(false);
-      }
+      handleSearchVideos();
     },
-    [searchTerm],
+    [searchTerm, handleSearchVideos],
   );
+
+  const handleScroll = useCallback(() => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop !==
+        document.documentElement.offsetHeight ||
+      isLoading
+    ) {
+      return;
+    }
+
+    handleSearchVideos();
+  }, [handleSearchVideos, isLoading]);
+
+  useEffect(() => {
+    window.addEventListener('scroll', handleScroll);
+
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
 
   return (
     <>
       <Container fitScreen={!isSearched} centralizeItems={!isSearched}>
         <FormContainer>
-          <Form component="form" onSubmit={handleSearchVideos}>
+          <Form component="form" onSubmit={handleSearchFormSubmit}>
             <StyledInputBase
               placeholder="Pesquisar"
               onChange={handleSearchTermInputTextChange}
