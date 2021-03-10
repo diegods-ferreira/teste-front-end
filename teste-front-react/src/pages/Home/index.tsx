@@ -13,9 +13,12 @@ import {
   IconButton,
   Snackbar,
 } from '@material-ui/core';
+import { useHistory } from 'react-router-dom';
 import { Search } from '@material-ui/icons';
 
 import youtubeApi from '../../services/youtubeApi';
+
+import { useVideosList, Video } from '../../hooks/videosList';
 
 import notFoundImg from '../../assets/not-found.png';
 
@@ -29,24 +32,7 @@ import {
   VideoCard,
   VideoCardMedia,
   VideoCardContent,
-  StyledLink,
 } from './styles';
-
-interface Video {
-  id: {
-    videoId: string;
-  };
-  snippet: {
-    title: string;
-    channelTitle: string;
-    description: string;
-    thumbnails: {
-      high: {
-        url: string;
-      };
-    };
-  };
-}
 
 interface YoutubeSearchApiResponse {
   items: Video[];
@@ -54,9 +40,17 @@ interface YoutubeSearchApiResponse {
 }
 
 const Home: React.FC = () => {
-  const [videos, setVideos] = useState<Video[]>([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [nextPageToken, setNextPageToken] = useState('');
+  const {
+    videosList,
+    searchedTerm,
+    nextPageToken,
+    addVideos,
+    updateSearchedTerm,
+    updateNextPageToken,
+  } = useVideosList();
+
+  const history = useHistory();
+
   const [isSearched, setIsSearched] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
@@ -64,9 +58,9 @@ const Home: React.FC = () => {
 
   const handleSearchTermInputTextChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
-      setSearchTerm(event.target.value);
+      updateSearchedTerm(event.target.value);
     },
-    [],
+    [updateSearchedTerm],
   );
 
   const handleCloseSerachErrorSnackbar = useCallback(() => {
@@ -82,7 +76,7 @@ const Home: React.FC = () => {
         {
           params: {
             part: 'id,snippet',
-            q: searchTerm,
+            q: searchedTerm,
             maxResults: 9,
             key: process.env.REACT_APP_YOUTUBE_API_KEY,
             ...(nextPageToken ? { pageToken: nextPageToken } : {}),
@@ -90,13 +84,18 @@ const Home: React.FC = () => {
         },
       );
 
-      if (nextPageToken) {
-        setVideos(prevState => [...prevState, ...response.data.items]);
-      } else {
-        setVideos(response.data.items);
-      }
+      // if (nextPageToken) {
+      //   addPage(nextPageToken);
 
-      setNextPageToken(response.data.nextPageToken);
+      //   setVideos(prevState => [...prevState, ...response.data.items]);
+      // } else {
+      //   setVideos(response.data.items);
+      // }
+
+      addVideos(response.data.items);
+
+      updateNextPageToken(response.data.nextPageToken);
+
       setIsSearched(true);
     } catch (err) {
       setErrorSnackbarMessage('Erro ao pesquisar');
@@ -105,13 +104,13 @@ const Home: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchTerm, nextPageToken]);
+  }, [searchedTerm, nextPageToken, addVideos, updateNextPageToken]);
 
   const handleSearchFormSubmit = useCallback(
     (event: FormEvent<HTMLDivElement>) => {
       event.preventDefault();
 
-      if (!searchTerm) {
+      if (!searchedTerm) {
         setErrorSnackbarMessage('É preciso preencher o campo de pesquisa');
         setOpenErrorSnackbar(true);
         return;
@@ -119,7 +118,7 @@ const Home: React.FC = () => {
 
       handleSearchVideos();
     },
-    [searchTerm, handleSearchVideos],
+    [searchedTerm, handleSearchVideos],
   );
 
   const handleScroll = useCallback(() => {
@@ -134,11 +133,22 @@ const Home: React.FC = () => {
     handleSearchVideos();
   }, [handleSearchVideos, isLoading]);
 
+  const handleNavigateToVideoDetails = useCallback(
+    (videoId: string) => {
+      history.push(`/video/${videoId}`);
+    },
+    [history],
+  );
+
   useEffect(() => {
     window.addEventListener('scroll', handleScroll);
 
     return () => window.removeEventListener('scroll', handleScroll);
   }, [handleScroll]);
+
+  useEffect(() => {
+    setIsSearched(!!videosList.length);
+  }, [videosList]);
 
   return (
     <>
@@ -155,7 +165,7 @@ const Home: React.FC = () => {
           </Form>
         </FormContainer>
 
-        {isSearched && !videos.length && (
+        {isSearched && !videosList.length && (
           <NoVideoFoundContainer>
             <img src={notFoundImg} alt="Not found" />
             <strong>Não encontramos vídeos com o termo buscado.</strong>
@@ -163,9 +173,9 @@ const Home: React.FC = () => {
           </NoVideoFoundContainer>
         )}
 
-        {isSearched && !!videos.length && (
+        {isSearched && !!videosList.length && (
           <VideoCardsContainer>
-            {videos.map(video => (
+            {videosList.map(video => (
               <VideoCard key={video.id.videoId}>
                 <VideoCardMedia
                   image={video.snippet.thumbnails.high.url}
@@ -179,10 +189,15 @@ const Home: React.FC = () => {
                 </VideoCardContent>
 
                 <CardActions>
-                  <Button size="small" color="primary" variant="text">
-                    <StyledLink to={`/video/${video.id.videoId}`}>
-                      Detalhes do video
-                    </StyledLink>
+                  <Button
+                    size="small"
+                    color="primary"
+                    variant="text"
+                    onClick={() => {
+                      handleNavigateToVideoDetails(video.id.videoId);
+                    }}
+                  >
+                    Detalhes do video
                   </Button>
                 </CardActions>
               </VideoCard>
