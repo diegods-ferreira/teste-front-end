@@ -14,12 +14,14 @@ export interface Video {
       };
     };
   };
+  key: string;
 }
 
 interface VideosListContextData {
   videosList: Video[];
   searchedTerm: string;
   nextPageToken: string;
+  setNewVideosList(videos: Video[]): void;
   addVideos(videos: Video[]): void;
   updateSearchedTerm(term: string): void;
   updateNextPageToken(token: string): void;
@@ -33,6 +35,10 @@ const VideosListProvider: React.FC = ({ children }) => {
   const [videosList, setVideosList] = useState<Video[]>([]);
   const [searchedTerm, setSearchedTerm] = useState('');
   const [nextPageToken, setNextPageToken] = useState('');
+
+  const setNewVideosList = useCallback((videos: Video[]) => {
+    setVideosList(videos);
+  }, []);
 
   const addVideos = useCallback((videos: Video[]) => {
     setVideosList(prevState => [...prevState, ...videos]);
@@ -52,6 +58,7 @@ const VideosListProvider: React.FC = ({ children }) => {
         videosList,
         searchedTerm,
         nextPageToken,
+        setNewVideosList,
         addVideos,
         updateSearchedTerm,
         updateNextPageToken,

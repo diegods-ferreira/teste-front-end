@@ -45,6 +45,7 @@ const Home: React.FC = () => {
     videosList,
     searchedTerm,
     nextPageToken,
+    setNewVideosList,
     addVideos,
     updateSearchedTerm,
     updateNextPageToken,
@@ -69,7 +70,63 @@ const Home: React.FC = () => {
     setOpenErrorSnackbar(false);
   }, []);
 
-  const handleSearchVideos = useCallback(async () => {
+  const handleSearchFormSubmit = useCallback(
+    async (event: FormEvent<HTMLDivElement>) => {
+      event.preventDefault();
+
+      if (!searchedTerm) {
+        setErrorSnackbarMessage('É preciso preencher o campo de pesquisa');
+        setOpenErrorSnackbar(true);
+        return;
+      }
+
+      setFormSubmitAnimate(true);
+      setIsLoading(true);
+
+      try {
+        const response = await youtubeApi.get<YoutubeSearchApiResponse>(
+          '/search',
+          {
+            params: {
+              part: 'id,snippet',
+              type: 'video',
+              q: searchedTerm,
+              maxResults: 9,
+              key: process.env.REACT_APP_YOUTUBE_API_KEY,
+            },
+          },
+        );
+
+        setNewVideosList(
+          response.data.items.map(video => ({
+            ...video,
+            key: video.id.videoId,
+          })),
+        );
+
+        updateNextPageToken(response.data.nextPageToken);
+
+        setIsSearched(true);
+      } catch (err) {
+        setErrorSnackbarMessage('Erro ao pesquisar');
+        setOpenErrorSnackbar(true);
+        console.log(err.response.data);
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [searchedTerm, setNewVideosList, updateNextPageToken],
+  );
+
+  const handleScroll = useCallback(async () => {
+    if (
+      window.innerHeight + document.documentElement.scrollTop !==
+        document.documentElement.offsetHeight ||
+      isLoading
+    ) {
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -78,15 +135,21 @@ const Home: React.FC = () => {
         {
           params: {
             part: 'id,snippet',
+            type: 'video',
             q: searchedTerm,
             maxResults: 9,
             key: process.env.REACT_APP_YOUTUBE_API_KEY,
-            ...(nextPageToken ? { pageToken: nextPageToken } : {}),
+            pageToken: nextPageToken,
           },
         },
       );
 
-      addVideos(response.data.items);
+      addVideos(
+        response.data.items.map(video => ({
+          ...video,
+          key: `${nextPageToken}__${video.id.videoId}`,
+        })),
+      );
 
       updateNextPageToken(response.data.nextPageToken);
 
@@ -98,36 +161,7 @@ const Home: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [searchedTerm, nextPageToken, addVideos, updateNextPageToken]);
-
-  const handleSearchFormSubmit = useCallback(
-    (event: FormEvent<HTMLDivElement>) => {
-      event.preventDefault();
-
-      if (!searchedTerm) {
-        setErrorSnackbarMessage('É preciso preencher o campo de pesquisa');
-        setOpenErrorSnackbar(true);
-        return;
-      }
-
-      setFormSubmitAnimate(true);
-
-      handleSearchVideos();
-    },
-    [searchedTerm, handleSearchVideos],
-  );
-
-  const handleScroll = useCallback(() => {
-    if (
-      window.innerHeight + document.documentElement.scrollTop !==
-        document.documentElement.offsetHeight ||
-      isLoading
-    ) {
-      return;
-    }
-
-    handleSearchVideos();
-  }, [handleSearchVideos, isLoading]);
+  }, [isLoading, searchedTerm, nextPageToken, addVideos, updateNextPageToken]);
 
   const handleNavigateToVideoDetails = useCallback(
     (videoId: string) => {
@@ -144,8 +178,11 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     setIsSearched(!!videosList.length);
-    setFormSubmitAnimate(!!videosList.length);
   }, [videosList]);
+
+  useEffect(() => {
+    setFormSubmitAnimate(isSearched);
+  }, [isSearched]);
 
   return (
     <ColoredBackground animate={formSubmitAnimate}>
@@ -155,6 +192,7 @@ const Home: React.FC = () => {
             <StyledInputBase
               placeholder="Pesquisar"
               onChange={handleSearchTermInputTextChange}
+              defaultValue={searchedTerm}
             />
             <IconButton type="submit" aria-label="search">
               <Search />
@@ -173,7 +211,7 @@ const Home: React.FC = () => {
         {isSearched && !!videosList.length && (
           <VideoCardsContainer>
             {videosList.map(video => (
-              <VideoCard key={video.id.videoId}>
+              <VideoCard key={video.key}>
                 <VideoCardMedia
                   image={video.snippet.thumbnails.high.url}
                   title={video.snippet.title}
