@@ -1,4 +1,4 @@
-import styled, { css } from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
 import {
   Paper,
   InputBase,
@@ -7,38 +7,89 @@ import {
   CardContent,
 } from '@material-ui/core';
 
-interface ContainerProps {
-  fitScreen?: boolean;
-  centralizeItems?: boolean;
+interface ColoredBackgroundProps {
+  animate?: boolean;
 }
 
-export const Container = styled.div<ContainerProps>`
+interface FormContainerProps {
+  animate?: boolean;
+}
+
+const coloredBackgroundAnimation = keyframes`
+  from {
+    background: #3f51b5;
+  }
+  to {
+    background: #323b71;
+  }
+`;
+
+const coloredBackgroundSubmitAnimation = keyframes`
+  from {
+    background: #3f51b5;
+  }
+  to {
+    background: #ebebeb;
+  }
+`;
+
+export const ColoredBackground = styled.div<ColoredBackgroundProps>`
   width: 100%;
-  padding: 24px;
+  min-height: 100vh;
+  animation: ${coloredBackgroundAnimation} 5s;
+  animation-direction: alternate;
+  animation-iteration-count: infinite;
 
   ${props =>
-    props.fitScreen &&
+    props.animate &&
     css`
-      height: 100vh;
-    `}
-
-  ${props =>
-    props.centralizeItems &&
-    css`
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
+      animation: ${coloredBackgroundSubmitAnimation} 1s;
+      animation-direction: normal;
+      animation-iteration-count: unset;
     `}
 `;
 
-export const FormContainer = styled.div`
+export const Container = styled.div`
+  width: 100%;
+  padding: 24px;
+`;
+
+const formAppearanceAnimation = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
+const formSubmitAnimation = keyframes`
+  from {
+    margin-top: calc(50vh - 48px);
+  }
+  to {
+    margin-top: 0;
+  }
+`;
+
+export const FormContainer = styled.div<FormContainerProps>`
   width: 100%;
   height: fit-content;
+  margin-top: calc(50vh - 48px);
+
+  animation: ${formAppearanceAnimation} 0.5s;
 
   display: flex;
   align-items: center;
   justify-content: center;
+
+  ${props =>
+    props.animate &&
+    css`
+      animation: ${formSubmitAnimation} 0.5s forwards;
+    `}
 `;
 
 export const Form = styled(Paper)`
@@ -94,9 +145,22 @@ export const VideoCardsContainer = styled.div`
   }
 `;
 
+const videoCardAppearanceAnimation = keyframes`
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+`;
+
 export const VideoCard = styled(Card)`
   width: 100%;
   height: fit-content;
+
+  animation: ${videoCardAppearanceAnimation} 0.2s;
 
   & + div {
     margin-top: 12px;

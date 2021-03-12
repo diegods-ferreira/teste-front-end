@@ -23,6 +23,7 @@ import { useVideosList, Video } from '../../hooks/videosList';
 import notFoundImg from '../../assets/not-found.png';
 
 import {
+  ColoredBackground,
   Container,
   FormContainer,
   Form,
@@ -55,6 +56,7 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [openErrorSnackbar, setOpenErrorSnackbar] = useState(false);
   const [errorSnackbarMessage, setErrorSnackbarMessage] = useState('');
+  const [formSubmitAnimate, setFormSubmitAnimate] = useState(false);
 
   const handleSearchTermInputTextChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -84,14 +86,6 @@ const Home: React.FC = () => {
         },
       );
 
-      // if (nextPageToken) {
-      //   addPage(nextPageToken);
-
-      //   setVideos(prevState => [...prevState, ...response.data.items]);
-      // } else {
-      //   setVideos(response.data.items);
-      // }
-
       addVideos(response.data.items);
 
       updateNextPageToken(response.data.nextPageToken);
@@ -115,6 +109,8 @@ const Home: React.FC = () => {
         setOpenErrorSnackbar(true);
         return;
       }
+
+      setFormSubmitAnimate(true);
 
       handleSearchVideos();
     },
@@ -148,12 +144,13 @@ const Home: React.FC = () => {
 
   useEffect(() => {
     setIsSearched(!!videosList.length);
+    setFormSubmitAnimate(!!videosList.length);
   }, [videosList]);
 
   return (
-    <>
-      <Container fitScreen={!isSearched} centralizeItems={!isSearched}>
-        <FormContainer>
+    <ColoredBackground animate={formSubmitAnimate}>
+      <Container>
+        <FormContainer animate={formSubmitAnimate}>
           <Form component="form" onSubmit={handleSearchFormSubmit}>
             <StyledInputBase
               placeholder="Pesquisar"
@@ -218,7 +215,7 @@ const Home: React.FC = () => {
       <Backdrop style={{ zIndex: 1 }} open={isLoading}>
         <CircularProgress color="primary" />
       </Backdrop>
-    </>
+    </ColoredBackground>
   );
 };
 
