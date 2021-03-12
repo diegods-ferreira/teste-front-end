@@ -167,7 +167,7 @@ const VideoDetails: React.FC = () => {
           />
         </VideoPlayerContainer>
 
-        <VideoMetaContainer animationDelay={0.6}>
+        <VideoMetaContainer animationdelay={0.6}>
           <h5 aria-label="channel-title">{video.snippet.channelTitle}</h5>
 
           <VideoInteractionCounters>
@@ -199,7 +199,7 @@ const VideoDetails: React.FC = () => {
           </AccordionDetails>
         </VideoDescriptionAccordion>
 
-        <VideoMetaContainer animationDelay={1}>
+        <VideoMetaContainer animationdelay={1}>
           <VideoStatistics aria-label="views-count">
             <RemoveRedEyeIcon fontSize="small" />
             <Typography variant="caption">

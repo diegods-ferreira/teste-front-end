@@ -2,7 +2,7 @@ import styled, { css, keyframes } from 'styled-components';
 import { Accordion, AppBar, Paper, Typography } from '@material-ui/core';
 
 interface VideoMetaContainerProps {
-  animationDelay?: number;
+  animationdelay?: number;
 }
 
 export const ErrorMessageContainer = styled.div`
@@ -123,9 +123,9 @@ export const VideoMetaContainer = styled(Paper)<VideoMetaContainerProps>`
   animation-fill-mode: backwards;
 
   ${props =>
-    props.animationDelay &&
+    props.animationdelay &&
     css`
-      animation-delay: ${props.animationDelay}s;
+      animation-delay: ${props.animationdelay}s;
     `}
 
   display: flex;
