@@ -1,10 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useParams, useHistory } from 'react-router-dom';
 import {
-  Accordion,
   AccordionDetails,
   AccordionSummary,
-  AppBar,
   Backdrop,
   Button,
   CircularProgress,
@@ -26,12 +24,15 @@ import notFoundImg from '../../assets/not-found.png';
 
 import {
   ErrorMessageContainer,
-  BackLink,
+  AnimatedAppBar,
+  AppBarTitle,
   Container,
+  VideoTitle,
   VideoPlayerContainer,
   VideoMetaContainer,
   VideoInteractionCounters,
   VideoStatistics,
+  VideoDescriptionAccordion,
   VideoDescription,
 } from './styles';
 
@@ -59,6 +60,7 @@ interface YoutubeApiResponse {
 
 const VideoDetails: React.FC = () => {
   const { videoId } = useParams<RouteParams>();
+  const history = useHistory();
 
   const [video, setVideo] = useState<Video>({} as Video);
   const [displayVideoInfo, setDisplayVideoInfo] = useState(false);
@@ -93,6 +95,10 @@ const VideoDetails: React.FC = () => {
     },
     [],
   );
+
+  const handleNavigateBack = useCallback(() => {
+    history.push('/');
+  }, [history]);
 
   useEffect(() => {
     fetchVideoInfoFromYoutubeApi();
@@ -132,20 +138,25 @@ const VideoDetails: React.FC = () => {
 
   return (
     <>
-      <AppBar position="static">
+      <AnimatedAppBar position="static">
         <Toolbar>
-          <IconButton edge="start" color="inherit" aria-label="go-back">
-            <BackLink to="/">
-              <ArrowBackIcon />
-            </BackLink>
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="go-back"
+            onClick={handleNavigateBack}
+          >
+            <ArrowBackIcon />
           </IconButton>
-          <Typography variant="subtitle1" noWrap aria-label="video-title">
-            {video.snippet.title}
-          </Typography>
+          <AppBarTitle>Detalhes do vídeo</AppBarTitle>
         </Toolbar>
-      </AppBar>
+      </AnimatedAppBar>
 
       <Container>
+        <VideoTitle variant="h6" aria-label="video-title">
+          {video.snippet.title}
+        </VideoTitle>
+
         <VideoPlayerContainer>
           <iframe
             title="youtube-video"
@@ -156,7 +167,7 @@ const VideoDetails: React.FC = () => {
           />
         </VideoPlayerContainer>
 
-        <VideoMetaContainer>
+        <VideoMetaContainer animationDelay={0.6}>
           <h5 aria-label="channel-title">{video.snippet.channelTitle}</h5>
 
           <VideoInteractionCounters>
@@ -176,7 +187,7 @@ const VideoDetails: React.FC = () => {
           </VideoInteractionCounters>
         </VideoMetaContainer>
 
-        <Accordion
+        <VideoDescriptionAccordion
           expanded={isDescriptionExpanded}
           onChange={handleToggleDescriptionAccordion}
         >
@@ -186,9 +197,9 @@ const VideoDetails: React.FC = () => {
           <AccordionDetails>
             <VideoDescription>{video.snippet.description}</VideoDescription>
           </AccordionDetails>
-        </Accordion>
+        </VideoDescriptionAccordion>
 
-        <VideoMetaContainer>
+        <VideoMetaContainer animationDelay={1}>
           <VideoStatistics aria-label="views-count">
             <RemoveRedEyeIcon fontSize="small" />
             <Typography variant="caption">

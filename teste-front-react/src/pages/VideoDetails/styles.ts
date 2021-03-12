@@ -1,6 +1,9 @@
-import { Paper } from '@material-ui/core';
-import { Link } from 'react-router-dom';
-import styled from 'styled-components';
+import styled, { css, keyframes } from 'styled-components';
+import { Accordion, AppBar, Paper, Typography } from '@material-ui/core';
+
+interface VideoMetaContainerProps {
+  animationDelay?: number;
+}
 
 export const ErrorMessageContainer = styled.div`
   width: 100%;
@@ -40,10 +43,28 @@ export const ErrorMessageContainer = styled.div`
   }
 `;
 
-export const BackLink = styled(Link)`
-  color: inherit;
-  display: flex;
-  align-items: center;
+const appearFromUp = keyframes`
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+`;
+
+export const AnimatedAppBar = styled(AppBar)`
+  animation: ${appearFromUp} 0.5s;
+`;
+
+export const AppBarTitle = styled.h1`
+  font-size: 1em;
+  margin-left: 12px;
+
+  @media (min-width: 769px) {
+    font-size: 1.2em;
+  }
 `;
 
 export const Container = styled.div`
@@ -57,9 +78,31 @@ export const Container = styled.div`
   }
 `;
 
+const appearFromLeft = keyframes`
+  from {
+    opacity: 0;
+    transform: translateX(-10%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+`;
+
+export const VideoTitle = styled(Typography)`
+  animation: ${appearFromLeft} 0.8s;
+  animation-delay: 0.2s;
+  animation-fill-mode: backwards;
+`;
+
 export const VideoPlayerContainer = styled.div`
   width: 100%;
   height: 164px;
+  margin-top: 12px;
+
+  animation: ${appearFromLeft} 0.8s;
+  animation-delay: 0.4s;
+  animation-fill-mode: backwards;
 
   & > iframe {
     width: 100%;
@@ -71,16 +114,27 @@ export const VideoPlayerContainer = styled.div`
   }
 `;
 
-export const VideoMetaContainer = styled(Paper)`
+export const VideoMetaContainer = styled(Paper)<VideoMetaContainerProps>`
   width: 100%;
   margin: 12px 0;
   padding: 12px;
+
+  animation: ${appearFromLeft} 0.8s;
+  animation-fill-mode: backwards;
+
+  ${props =>
+    props.animationDelay &&
+    css`
+      animation-delay: ${props.animationDelay}s;
+    `}
 
   display: flex;
   align-items: flex-start;
 
   & > h5 {
     flex: 1;
+    display: flex;
+    align-items: center;
   }
 `;
 
@@ -101,6 +155,12 @@ export const VideoStatistics = styled.div`
   & + div {
     margin-left: 12px;
   }
+`;
+
+export const VideoDescriptionAccordion = styled(Accordion)`
+  animation: ${appearFromLeft} 0.8s;
+  animation-delay: 0.8s;
+  animation-fill-mode: backwards;
 `;
 
 export const VideoDescription = styled.p`
